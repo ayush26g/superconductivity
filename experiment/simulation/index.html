@@ -247,9 +247,14 @@
 
       ctx.fillStyle = '#94a3b8';
       ctx.font = '22px monospace';
-      ctx.fillText(Material: YBCO (Tc = ${simState.tc} K), 30, 92);
-      ctx.fillText(Temperature: ${Math.round(simState.temp)} K, 30, 126);
-      ctx.fillText(Resistance:  ${simState.resistance.toFixed(2)} Ω, 30, 160);
+      // Line 250
+      ctx.fillText(`Material: YBCO (Tc = ${simState.tc} K)`, 30, 92);
+
+      // Line 251
+      ctx.fillText(`Temperature: ${Math.round(simState.temp)} K`, 30, 126);
+
+      // Line 252
+      ctx.fillText(`Resistance: ${simState.resistance.toFixed(2)} Ω`, 30, 160);
 
       const isSuper = simState.temp <= simState.tc;
       ctx.fillStyle = isSuper ? '#22c55e' : '#ef4444';
