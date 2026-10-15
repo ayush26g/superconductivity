@@ -526,12 +526,17 @@
 let vrSupported = false;
 
 if ('xr' in navigator) {
-  navigator.xr.isSessionSupported('immersive-vr').then((supported) => {
-    vrSupported = supported;
-    if (!supported) {
-      console.warn("Immersive VR is not supported on this device/browser.");
-    }
-  });
+    navigator.xr.isSessionSupported('immersive-vr')
+        .then((supported) => {
+            vrSupported = supported;
+            if (!supported) {
+                console.warn("Immersive VR is not supported on this device/browser.");
+            }
+        })
+        .catch((err) => {
+            vrSupported = false;
+            console.warn("VR disabled or blocked by iframe policy:", err.message);
+        });
 }
 
 // 2. Call requestSession() directly inside your user-triggered function (e.g., button click)
