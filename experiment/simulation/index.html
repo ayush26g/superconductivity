@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Superconductivity & Meissner Effect - WebXR Walkable Lab</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      overflow: hidden;
+      background-color: #0b0f19;
+      font-family: system-ui, -apple-system, sans-serif;
+      user-select: none;
+    }
+    #desktop-guide {
+      position: absolute;
+      top: 16px;
+      left: 16px;
+      z-index: 100;
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid rgba(56, 189, 248, 0.4);
+      border-radius: 8px;
+      padding: 14px 18px;
+      color: #f8fafc;
+      font-size: 13px;
+      line-height: 1.6;
+      pointer-events: none;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+    }
+    #desktop-guide kbd {
+      background: #334155;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: monospace;
+      color: #38bdf8;
+      border: 1px solid #475569;
+    }
+    #vr-btn {
+      position: absolute;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 14px 32px;
+      border-radius: 8px;
+      background: rgba(15, 23, 42, 0.92);
+      border: 2px solid #38bdf8;
+      color: #38bdf8;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      z-index: 100;
+      transition: all 0.2s;
+    }
+    #vr-btn:hover {
+      background: #38bdf8;
+      color: #0b0f19;
+    }
+  </style>
+
+  <!-- Three.js + OrbitControls -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+</head>
+<body>
+  <div id="desktop-guide">
+    <strong style="color:#38bdf8; font-size:14px;">Virtual Physics Laboratory</strong><br />
+    • <strong>Movement:</strong> Walk with <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> or <kbd>Arrow Keys</kbd><br />
+    • <strong>Look:</strong> Click & drag mouse to look around<br />
+    • <strong>VR Mode:</strong> Left Thumbstick to Walk, Right Thumbstick to Turn<br />
+    • <strong>Interact:</strong> Click buttons or aim VR laser pointer to adjust temp & field lines
+  </div>
+
+  <button id="vr-btn" onclick="initiateVR()">ENTER VR</button>
+
+  <script>
+    // --- Simulation & Physical State ---
+    const simState = {
+      temp: 300,
+      targetTemp: 300,
+      tc: 93, // YBCO Critical Temperature (K)
+      isSuper: false,
+      resistance: 10.0,
+      showFieldLines: true,
+      baseY: 0.94,
+      levitateY: 1.22
+    };
+
+    function computeResistance(temp) {
+      if (temp <= simState.tc) return 0.0;
+      const slope = 10.0 / (300 - simState.tc);
+      return Number(((temp - simState.tc) * slope).toFixed(2));
+    }
+
+    // --- Scene, Camera, Renderer ---
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x0b1120);
+
+    // Camera Rig / XR Rig (allows walking without resetting headset origin)
+    const userRig = new THREE.Group();
+    userRig.position.set(0, 0, 1.6);
+    scene.add(userRig);
+
+    const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 100);
+    camera.position.set(0, 1.6, 0); // eye level
+    userRig.add(camera);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setPixelRatio(window.devicePixelRatio);
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.shadowMap.enabled = true;
+    renderer.xr.enabled = true;
+    document.body.appendChild(renderer.domElement);
+
+    const controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.target.set(0, 1.0, -1.6);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.05;
+    // --- Laboratory Environment (Walls, Floor, Ceiling) ---
+    // Floor
+    const floor = new THREE.Mesh(
+      new THREE.PlaneGeometry(16, 16),
+      new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.8 })
+    );
+    floor.rotation.x = -Math.PI / 2;
+    floor.receiveShadow = true;
+    scene.add(floor);
+
+    // Wall grid lines (gives visual perspective while walking)
+    const gridHelper = new THREE.GridHelper(16, 16, 0x38bdf8, 0x334155);
+    gridHelper.position.y = 0.001;
+    scene.add(gridHelper);
+
+    // Lab Bench
+    const table = new THREE.Mesh(
+      new THREE.BoxGeometry(1.8, 0.9, 1.1),
+      new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.5 })
+    );
+    table.position.set(0, 0.45, 0);
+    table.receiveShadow = true;
+    scene.add(table);
+
+    // Lights
+    const hemiLight = new THREE.HemisphereLight(0xffffff, 0x1e293b, 0.8);
+    scene.add(hemiLight);
+
+    const dirLight = new THREE.DirectionalLight(0xffffff, 1.5);
+    dirLight.position.set(3, 5, 2);
+    dirLight.castShadow = true;
+    scene.add(dirLight);
+
+    // --- Apparatus: Permanent Magnet & YBCO Pellet ---
+    const magnet = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.22, 0.22, 0.06, 36),
+      new THREE.MeshStandardMaterial({ color: 0x94a3b8, metalness: 0.9, roughness: 0.2 })
+    );
+    magnet.position.set(-0.35, 0.93, 0);
+    magnet.castShadow = true;
+    scene.add(magnet);
+
+    const pellet = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.1, 0.1, 0.035, 36),
+      new THREE.MeshStandardMaterial({ color: 0x111827, roughness: 0.35, metalness: 0.2 })
+    );
+    pellet.position.set(-0.35, simState.baseY, 0);
+    pellet.castShadow = true;
+    scene.add(pellet);
+
+    // Cryo frost ring
+    const frostRing = new THREE.Mesh(
+      new THREE.TorusGeometry(0.105, 0.006, 16, 36),
+      new THREE.MeshBasicMaterial({ color: 0x38bdf8, transparent: true, opacity: 0 })
+    );
+    frostRing.rotation.x = Math.PI / 2;
+    pellet.add(frostRing);
+
+    // --- 3D Magnetic Field Lines with Meissner Expulsion ---
+    const fieldLinesGroup = new THREE.Group();
+    fieldLinesGroup.position.set(-0.35, 0.93, 0);
+    scene.add(fieldLinesGroup);
+
+    const fieldCurves = [];
+    const numLines = 16;
+
+    for (let i = 0; i < numLines; i++) {
+      const angle = (i / numLines) * Math.PI * 2;
+      const radius = 0.14;
+      const geom = new THREE.BufferGeometry();
+      const posArray = new Float32Array(50 * 3);
+      geom.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+
+      const mat = new THREE.LineBasicMaterial({
+        color: 0x00e5ff,
+        transparent: true,
+        opacity: 0.7,
+        linewidth: 1.5
+      });
+      const line = new THREE.Line(geom, mat);
+      fieldLinesGroup.add(line);
+
+      fieldCurves.push({ angle, radius, line });
+    }
+
+    function updateFieldLines(expulsionFactor) {
+      fieldCurves.forEach(({ angle, radius, line }) => {
+        const positions = line.geometry.attributes.position.array;
+        let ptr = 0;
+        const cos = Math.cos(angle);
+        const sin = Math.sin(angle);
+
+        for (let j = 0; j < 50; j++) {
+          const t = j / 49;
+          const y = (t - 0.2) * 0.7;
+          const pelletY = pellet.position.y - 0.93;
+          const distToPellet = Math.abs(y - pelletY);
+          const push = expulsionFactor * Math.exp(-(distToPellet * distToPellet) / 0.008) * 0.18;
+          const currentR = radius + push;
+          positions[ptr++] = currentR * cos;
+          positions[ptr++] = y;
+          positions[ptr++] = currentR * sin;
+        }
+        line.geometry.attributes.position.needsUpdate = true;
+      });
+    }
+    updateFieldLines(0);
+
+    // --- 3D R-T Graph & Control Unit ---
+    const panelCanvas = document.createElement('canvas');
+    panelCanvas.width = 640;
+    panelCanvas.height = 640;
+    const ctx = panelCanvas.getContext('2d');
+    const panelTexture = new THREE.CanvasTexture(panelCanvas);
+    function redrawControlPanel() {
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(0, 0, 640, 640);
+      ctx.strokeStyle = '#38bdf8';
+      ctx.lineWidth = 6;
+      ctx.strokeRect(3, 3, 634, 634);
+
+      // Title & Telemetry Header
+      ctx.fillStyle = '#38bdf8';
+      ctx.font = 'bold 30px system-ui';
+      ctx.fillText('YBCO SUPERCONDUCTOR LAB', 30, 48);
+
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = '22px monospace';
+      ctx.fillText(Material: YBCO (Tc = ${simState.tc} K), 30, 92);
+      ctx.fillText(Temperature: ${Math.round(simState.temp)} K, 30, 126);
+      ctx.fillText(Resistance:  ${simState.resistance.toFixed(2)} Ω, 30, 160);
+
+      const isSuper = simState.temp <= simState.tc;
+      ctx.fillStyle = isSuper ? '#22c55e' : '#ef4444';
+      ctx.font = 'bold 24px monospace';
+      ctx.fillText(isSuper ? '● MEISSNER STATE (R = 0 Ω)' : '● NORMAL RESISTIVE STATE', 30, 205);
+
+      // R-T Graph Box
+      const gx = 70;
+      const gy = 260;
+      const gw = 500;
+      const gh = 230;
+
+      ctx.fillStyle = '#1e293b';
+      ctx.fillRect(gx, gy, gw, gh);
+      ctx.strokeStyle = '#475569';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(gx, gy, gw, gh);
+
+      ctx.strokeStyle = '#334155';
+      ctx.lineWidth = 1;
+      for (let k = 1; k < 4; k++) {
+        const yLine = gy + (gh / 4) * k;
+        ctx.beginPath();
+        ctx.moveTo(gx, yLine);
+        ctx.lineTo(gx + gw, yLine);
+        ctx.stroke();
+      }
+
+      ctx.fillStyle = '#cbd5e1';
+      ctx.font = 'bold 18px monospace';
+      ctx.fillText('Resistance (R) vs Temperature (T)', gx, gy - 12);
+
+      ctx.font = '15px monospace';
+      ctx.fillStyle = '#94a3b8';
+      ctx.fillText('R (Ω)', gx - 48, gy + 20);
+      ctx.fillText('10 Ω', gx - 45, gy + 25);
+      ctx.fillText('0 Ω', gx - 35, gy + gh);
+      ctx.fillText('0 K', gx, gy + gh + 22);
+      ctx.fillText('300 K', gx + gw - 45, gy + gh + 22);
+
+      const tcX = gx + (simState.tc / 300) * gw;
+      ctx.strokeStyle = '#38bdf8';
+      ctx.setLineDash([4, 4]);
+      ctx.beginPath();
+      ctx.moveTo(tcX, gy);
+      ctx.lineTo(tcX, gy + gh);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = '#38bdf8';
+      ctx.fillText(Tc (${simState.tc}K), tcX - 30, gy + gh + 22);
+
+      // Curve
+      ctx.strokeStyle = '#60a5fa';
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.moveTo(gx, gy + gh);
+      ctx.lineTo(tcX, gy + gh);
+      ctx.lineTo(gx + gw, gy + 15);
+      ctx.stroke();
+
+      // Real-time tracker point
+      const currentNormT = Math.min(Math.max(simState.temp / 300, 0), 1);
+      const dotX = gx + currentNormT * gw;
+      const dotY = simState.temp <= simState.tc 
+        ? gy + gh 
+        : gy + gh - ((simState.temp - simState.tc) / (300 - simState.tc)) * (gh - 15);
+
+      ctx.fillStyle = '#ef4444';
+      ctx.beginPath();
+      ctx.arc(dotX, dotY, 7, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      panelTexture.needsUpdate = true;
+    }
+    redrawControlPanel();
+
+    const screenMesh = new THREE.Mesh(
+      new THREE.PlaneGeometry(0.72, 0.72),
+      new THREE.MeshBasicMaterial({ map: panelTexture })
+    );
+    screenMesh.position.set(0.38, 1.38, -0.15);
+    screenMesh.rotation.y = -Math.PI / 10;
+    scene.add(screenMesh);
+
+    // --- Interactive 3D Buttons ---
+    const interactiveObjects = [];
+
+    function makeButton(label, color, posX, posY, posZ, width, action) {
+      const btnGeo = new THREE.BoxGeometry(width, 0.05, 0.02);
+      const btnMat = new THREE.MeshStandardMaterial({ color: color, roughness: 0.3 });
+      const mesh = new THREE.Mesh(btnGeo, btnMat);
+      mesh.position.set(posX, posY, posZ);
+      mesh.rotation.y = -Math.PI / 10;
+      mesh.userData = { action: action };
+      scene.add(mesh);
+      interactiveObjects.push(mesh);
+      const lblCanvas = document.createElement('canvas');
+      lblCanvas.width = 256;
+      lblCanvas.height = 64;
+      const lCtx = lblCanvas.getContext('2d');
+      lCtx.fillStyle = '#ffffff';
+      lCtx.font = 'bold 30px system-ui';
+      lCtx.textAlign = 'center';
+      lCtx.textBaseline = 'middle';
+      lCtx.fillText(label, 128, 32);
+
+      const lblTexture = new THREE.CanvasTexture(lblCanvas);
+      const lblMesh = new THREE.Mesh(
+        new THREE.PlaneGeometry(width * 0.95, 0.045),
+        new THREE.MeshBasicMaterial({ map: lblTexture, transparent: true })
+      );
+      lblMesh.position.z = 0.012;
+      mesh.add(lblMesh);
+
+      return mesh;
+    }
+
+    makeButton('-10 K', 0x0284c7, 0.22, 1.05, -0.09, 0.14, () => {
+      simState.targetTemp = Math.max(0, simState.targetTemp - 10);
+    });
+
+    makeButton('+10 K', 0xb91c1c, 0.38, 1.05, -0.12, 0.14, () => {
+      simState.targetTemp = Math.min(300, simState.targetTemp + 10);
+    });
+
+    makeButton('Pour LN₂ (77 K)', 0x0ea5e9, 0.22, 0.98, -0.08, 0.18, () => {
+      simState.targetTemp = 77;
+    });
+
+    makeButton('Reset (300 K)', 0x475569, 0.43, 0.98, -0.12, 0.18, () => {
+      simState.targetTemp = 300;
+    });
+
+    const fieldBtn = makeButton('Field Lines: ON', 0x059669, 0.32, 0.91, -0.10, 0.28, () => {
+      simState.showFieldLines = !simState.showFieldLines;
+      fieldLinesGroup.visible = simState.showFieldLines;
+      const lCtx = fieldBtn.children[0].material.map.image.getContext('2d');
+      lCtx.clearRect(0, 0, 256, 64);
+      lCtx.fillStyle = '#ffffff';
+      lCtx.font = 'bold 28px system-ui';
+      lCtx.textAlign = 'center';
+      lCtx.textBaseline = 'middle';
+      lCtx.fillText(simState.showFieldLines ? 'Field Lines: ON' : 'Field Lines: OFF', 128, 32);
+      fieldBtn.children[0].material.map.needsUpdate = true;
+      fieldBtn.material.color.setHex(simState.showFieldLines ? 0x059669 : 0xd97706);
+    });
+
+    // --- Interaction (Mouse & VR Lasers) ---
+    const raycaster = new THREE.Raycaster();
+    const mouse = new THREE.Vector2();
+
+    window.addEventListener('pointerdown', (e) => {
+      if (renderer.xr.isPresenting) return;
+      mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+      mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+      raycaster.setFromCamera(mouse, camera);
+      const hits = raycaster.intersectObjects(interactiveObjects);
+      if (hits.length > 0) {
+        hits[0].object.userData.action();
+        redrawControlPanel();
+      }
+    });
+
+    function buildLaser() {
+      const geom = new THREE.BufferGeometry().setFromPoints([
+        new THREE.Vector3(0, 0, 0),
+        new THREE.Vector3(0, 0, -3)
+      ]);
+      return new THREE.Line(geom, new THREE.LineBasicMaterial({ color: 0x38bdf8 }));
+    }
+
+    const c1 = renderer.xr.getController(0);
+    c1.add(buildLaser());
+    c1.addEventListener('selectstart', onVRSelect);
+    userRig.add(c1);
+
+    const c2 = renderer.xr.getController(1);
+    c2.add(buildLaser());
+    c2.addEventListener('selectstart', onVRSelect);
+    userRig.add(c2);
+
+    function onVRSelect(event) {
+      const controller = event.target;
+      const m = new THREE.Matrix4().identity().extractRotation(controller.matrixWorld);
+      raycaster.ray.origin.setFromMatrixPosition(controller.matrixWorld);
+      raycaster.ray.direction.set(0, 0, -1).applyMatrix4(m);
+
+      const hits = raycaster.intersectObjects(interactiveObjects);
+      if (hits.length > 0) {
+        hits[0].object.userData.action();
+        redrawControlPanel();
+      }
+    }
+
+    // --- Locomotion System (WASD for Desktop + Thumbstick for VR) ---
+    const keysPressed = {};
+    window.addEventListener('keydown', (e) => { keysPressed[e.code] = true; });
+    window.addEventListener('keyup', (e) => { keysPressed[e.code] = false; });
+
+    const moveDirection = new THREE.Vector3();
+    const moveSpeed = 0.04;
+
+    function handleDesktopMovement() {
+      moveDirection.set(0, 0, 0);
+      // Camera forward/right projection along ground plane (XZ)
+      const forward = new THREE.Vector3();
+      camera.getWorldDirection(forward);
+      forward.y = 0;
+      forward.normalize();
+
+      const right = new THREE.Vector3();
+      right.crossVectors(forward, camera.up).normalize();
+
+      if (keysPressed['KeyW'] || keysPressed['ArrowUp']) moveDirection.add(forward);
+      if (keysPressed['KeyS'] || keysPressed['ArrowDown']) moveDirection.sub(forward);
+      if (keysPressed['KeyA'] || keysPressed['ArrowLeft']) moveDirection.sub(right);
+      if (keysPressed['KeyD'] || keysPressed['ArrowRight']) moveDirection.add(right);
+
+      if (moveDirection.lengthSq() > 0) {
+        moveDirection.normalize().multiplyScalar(moveSpeed);
+        userRig.position.add(moveDirection);
+        controls.target.add(moveDirection);
+      }
+    }
+
+    // VR Thumbstick Walking & Turning
+    function handleVRLocomotion() {
+      const session = renderer.xr.getSession();
+      if (!session) return;
+
+      for (const source of session.inputSources) {
+        if (!source.gamepad) continue;
+        const axes = source.gamepad.axes;
+
+        // Left Hand: Smooth Walking (Axes 2 = X, 3 = Y or Axes 0, 1)
+        if (source.handedness === 'left') {
+          const stickX = axes.length >= 4 ? axes[2] : axes[0];
+          const stickY = axes.length >= 4 ? axes[3] : axes[1];
+
+          if (Math.hypot(stickX, stickY) > 0.15) {
+            const forward = new THREE.Vector3();
+            camera.getWorldDirection(forward);
+            forward.y = 0;
+            forward.normalize();
+
+            const right = new THREE.Vector3();
+            right.crossVectors(forward, new THREE.Vector3(0, 1, 0)).normalize();
+
+            userRig.position.addScaledVector(forward, -stickY * 0.035);
+            userRig.position.addScaledVector(right, stickX * 0.035);
+          }
+        }
+
+        // Right Hand: Smooth Rotation
+        if (source.handedness === 'right') {
+          const turnX = axes.length >= 4 ? axes[2] : axes[0];
+          if (Math.abs(turnX) > 0.25) {
+            userRig.rotation.y -= turnX * 0.03;
+          }
+        }
+      }
+    }
+
+    // --- WebXR Starter ---
+    function initiateVR() {
+      if ('xr' in navigator) {
+        navigator.xr.isSessionSupported('immersive-vr').then((supported) => {
+          if (supported) {
+            navigator.xr.requestSession('immersive-vr', {
+              optionalFeatures: ['local-floor', 'bounded-floor', 'hand-tracking']
+            }).then(async (session) => {
+              await renderer.xr.setSession(session);
+            }).catch((err) => {
+              console.error("VR Session error:", err);
+            });
+          } else {
+            alert('WebXR immersive-vr not supported on this browser or headset.');
+          }
+        });
+      } else {
+        alert('WebXR API is not available in this browser.');
+      }
+    }
+
+    // --- Window Resize ---
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    // --- Animation & Physics Loop ---
+    const clock = new THREE.Clock();
+    let currentExpulsion = 0.0;
+
+    renderer.setAnimationLoop(() => {
+      const elapsed = clock.getElapsedTime();
+
+      // Handle Locomotion
+      if (renderer.xr.isPresenting) {
+        handleVRLocomotion();
+      } else {
+        handleDesktopMovement();
+        controls.update();
+      }
+
+      // Smooth Thermal Transition
+      if (Math.abs(simState.temp - simState.targetTemp) > 0.05) {
+        simState.temp += (simState.targetTemp - simState.temp) * 0.06;
+        simState.resistance = computeResistance(simState.temp);
+        redrawControlPanel();
+      }
+      simState.isSuper = simState.temp <= simState.tc;
+
+      if (simState.isSuper) {
+        // Meissner floating & flux-pinning rotation
+        const targetY = simState.levitateY + Math.sin(elapsed * 2.5) * 0.007;
+        pellet.position.y += (targetY - pellet.position.y) * 0.06;
+        pellet.rotation.y += 0.015;
+        frostRing.material.opacity += (0.9 - frostRing.material.opacity) * 0.05;
+        currentExpulsion += (1.0 - currentExpulsion) * 0.06;
+      } else {
+        // Return to magnet
+        pellet.position.y += (simState.baseY - pellet.position.y) * 0.08;
+        frostRing.material.opacity += (0 - frostRing.material.opacity) * 0.05;
+        currentExpulsion += (0.0 - currentExpulsion) * 0.08;
+      }
+
+      // Update Magnetic Field Flux Lines
+      if (simState.showFieldLines) {
+        updateFieldLines(currentExpulsion);
+      }
+
+      renderer.render(scene, camera);
+    });
+  </script>
+</body>
+</html>

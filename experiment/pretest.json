@@ -1,0 +1,17 @@
+[
+  {
+    "question": "What is the critical temperature (Tc) of a superconductor?",
+    "options": [
+      "The temperature where resistance increases sharply",
+      "The temperature below which resistance drops to zero",
+      "The boiling point of liquid nitrogen",
+      "The temperature where the material melts"
+    ],
+    "answer": "The temperature below which resistance drops to zero"
+  },
+  {
+    "question": "What is the magnetic susceptibility of a perfect diamagnet?",
+    "options": ["0", "+1", "-1", "Infinity"],
+    "answer": "-1"
+  }
+]

@@ -1,0 +1,17 @@
+[
+  {
+    "question": "Inside a superconductor below its critical temperature, the net magnetic field B is:",
+    "options": ["Zero", "Infinite", "Equal to external field", "Double the external field"],
+    "answer": "Zero"
+  },
+  {
+    "question": "The Meissner effect proves that a superconductor is:",
+    "options": [
+      "Merely a zero-resistance conductor",
+      "A perfect diamagnet",
+      "A strong ferromagnet",
+      "A paramagnetic substance"
+    ],
+    "answer": "A perfect diamagnet"
+  }
+]
