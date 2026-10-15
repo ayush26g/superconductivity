@@ -522,25 +522,36 @@
     }
 
     // --- WebXR Starter ---
-    function initiateVR() {
-      if ('xr' in navigator) {
-        navigator.xr.isSessionSupported('immersive-vr').then((supported) => {
-          if (supported) {
-            navigator.xr.requestSession('immersive-vr', {
-              optionalFeatures: ['local-floor', 'bounded-floor', 'hand-tracking']
-            }).then(async (session) => {
-              await renderer.xr.setSession(session);
-            }).catch((err) => {
-              console.error("VR Session error:", err);
-            });
-          } else {
-            alert('WebXR immersive-vr not supported on this browser or headset.');
-          }
-        });
-      } else {
-        alert('WebXR API is not available in this browser.');
-      }
+   // 1. Check support when the app loads and store the result
+let vrSupported = false;
+
+if ('xr' in navigator) {
+  navigator.xr.isSessionSupported('immersive-vr').then((supported) => {
+    vrSupported = supported;
+    if (!supported) {
+      console.warn("Immersive VR is not supported on this device/browser.");
     }
+  });
+}
+
+// 2. Call requestSession() directly inside your user-triggered function (e.g., button click)
+async function initiateVR() {
+  if (!vrSupported) {
+    alert('WebXR immersive-vr not supported on this browser or headset.');
+    return;
+  }
+
+  try {
+    const session = await navigator.xr.requestSession('immersive-vr', {
+      optionalFeatures: ['local-floor', 'bounded-floor', 'hand-tracking']
+    });
+    
+    await renderer.xr.setSession(session);
+  } catch (err) {
+    console.error("VR Session error:", err);
+    alert('Failed to start VR session.');
+  }
+}
 
     // --- Window Resize ---
     window.addEventListener('resize', () => {
