@@ -1,17 +1,84 @@
-[
-  {
-    "question": "Inside a superconductor below its critical temperature, the net magnetic field B is:",
-    "options": ["Zero", "Infinite", "Equal to external field", "Double the external field"],
-    "answer": "Zero"
-  },
-  {
-    "question": "The Meissner effect proves that a superconductor is:",
-    "options": [
-      "Merely a zero-resistance conductor",
-      "A perfect diamagnet",
-      "A strong ferromagnet",
-      "A paramagnetic substance"
-    ],
-    "answer": "A perfect diamagnet"
-  }
-]
+{
+  "questions": [
+    {
+      "question": "During the virtual experiment, why does the YBCO pellet levitate stably without sliding off the magnet sideways?",
+      "answers": [
+        "Electrostatic repulsion between the surface oxide layer and copper base",
+        "Flux pinning within crystal defects that locks quantized vortices in place against lateral displacement",
+        "Aerodynamic upward pressure created by evaporating liquid nitrogen gas",
+        "Paramagnetic alignment of yttrium ions along the external field direction"
+      ],
+      "correct": 1
+    },
+    {
+      "question": "What happens to the external magnetic field lines when the simulation temperature transitions from 100 K down to 77 K?",
+      "answers": [
+        "They turn into closed toroidal loops completely confined inside the pellet core",
+        "They are actively expelled from the interior and curve around the pellet body",
+        "They collapse and cancel out everywhere in the surrounding laboratory space",
+        "They concentrate uniformly through the center of the disc"
+      ],
+      "correct": 1
+    },
+    {
+      "question": "When observing the in-world R–T graph in the simulation, what is the value of electrical resistance R at 77 K?",
+      "answers": [
+        "10.00 Ω",
+        "2.54 Ω",
+        "0.00 Ω",
+        "Depends on the applied magnetic field strength"
+      ],
+      "correct": 2
+    },
+    {
+      "question": "How does the second London equation (∇ × Js = -B / (μ0 * λL^2)) explain the Meissner effect mathematically?",
+      "answers": [
+        "It proves that charge density becomes infinite at the boundary",
+        "Combined with Ampère's law, it yields ∇²B = B / λL², showing exponential decay of B inside the bulk",
+        "It shows that current density Js must be zero everywhere in the superconductor",
+        "It guarantees that magnetic permeability μ approaches infinity"
+      ],
+      "correct": 1
+    },
+    {
+      "question": "What is the condition on the Ginzburg–Landau parameter (κ = λ / ξ) that classifies YBCO as a Type-II superconductor?",
+      "answers": [
+        "κ < 1 / √2",
+        "κ > 1 / √2",
+        "κ = 0",
+        "κ < 0"
+      ],
+      "correct": 1
+    },
+    {
+      "question": "If you warm the simulated pellet above 93 K by clicking 'Reset (300 K)', what causes the pellet to fall back onto the magnet?",
+      "answers": [
+        "Thermal energy breaks Cooper pairs, destroying macroscopic phase coherence and the screening currents",
+        "The permanent magnet demagnetizes above room temperature",
+        "The diamagnetic susceptibility flips to a strong ferromagnetic attractive state",
+        "Liquid nitrogen condenses into a viscous layer pulling the pellet downward"
+      ],
+      "correct": 0
+    },
+    {
+      "question": "Why does Earnshaw's Theorem not prevent stable magnetic levitation in superconducting systems?",
+      "answers": [
+        "Earnshaw's Theorem only applies to electrostatic charges, not magnetic dipoles",
+        "Superconductors are diamagnetic systems with relative permeability μr < 1 (χ < 0), for which Earnshaw's restriction does not apply",
+        "Quantum mechanical spin polarization suspends gravitational acceleration",
+        "The theorem only applies in relativistic frames of reference"
+      ],
+      "correct": 1
+    },
+    {
+      "question": "What functional role does the 'Field Lines: ON/OFF' toggle serve in the laboratory simulation?",
+      "answers": [
+        "It changes the temperature from 77 K to 300 K instantly",
+        "It visualizes the spatial distortion and exclusion of magnetic flux lines versus normal field penetration",
+        "It switches between Type-I and Type-II superconductivity modes",
+        "It toggles the camera perspective between VR mode and desktop mode"
+      ],
+      "correct": 1
+    }
+  ]
+}
