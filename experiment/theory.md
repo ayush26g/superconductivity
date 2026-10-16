@@ -1,8 +1,8 @@
 ### First London Equation:
 
-Accelerating superconducting carriers of density $n_s$, effective mass $m^*$, and charge $q^*$ without friction:
+Accelerating superconducting carriers of density $n_s$, effective mass $m$, and charge $q$ without friction:
 
-$$\frac{\partial \mathbf{J}_s}{\partial t} = \frac{n_s (q^*)^2}{m^*} \mathbf{E} = \frac{1}{\mu_0 \lambda_L^2} \mathbf{E}$$
+$$\frac{\partial \mathbf{J}_s}{\partial t} = \frac{n_s q^2}{m} \mathbf{E} = \frac{1}{\mu_0 \lambda_L^2} \mathbf{E}$$
 
 ### Second London Equation:
 Taking the curl and substituting Faraday's law ($\nabla \times \mathbf{E} = -\frac{\partial \mathbf{B}}{\partial t}$):
