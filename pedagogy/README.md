@@ -17,8 +17,7 @@
 <h4> [1. Focus Area](#LO)
 <h4> [2. Learning Objectives ](#LO)
 <h4> [3. Instructional Strategy](#IS)
-<h4> [4. Task & Assessment Questions](#AQ)
-<h4> [5. Simulator Interactions](#SI)
+
 <hr>
 
 <a name="LO"></a>
@@ -59,29 +58,4 @@ Assessment Method : Diagnostic Pre-test evaluation, Real-time interactive teleme
 <hr>
 
 <a name="AQ"></a>
-#### 4. Task & Assessment Questions:
 
-  
-<br>
-
-Sr. No |	Learning Objective	| Task to be performed by <br> the student  in the simulator | Assessment Questions as per LO & Task
-:--|:--|:--|:-:
-1.|   <br>  |   <br>  | <br> 
-2.|   <br>  |   <br>  | <br> 
-
-
-<div align="right">
-    <b><a href="#top">↥ back to top</a></b>
-</div>
-<br/>
-<hr>
-
-<a name="SI"></a>
-
-#### 4. Simulator Interactions:
-<br>
-
-Sr.No | What Students will do? |	What Simulator will do?	| Purpose of the task
-:--|:--|:--|:--:
-1.|  <br> | <br> |   
-2.|  <br> | <br> |
