@@ -1,17 +1,84 @@
-[
-  {
-    "question": "What is the critical temperature (Tc) of a superconductor?",
-    "options": [
-      "The temperature where resistance increases sharply",
-      "The temperature below which resistance drops to zero",
-      "The boiling point of liquid nitrogen",
-      "The temperature where the material melts"
-    ],
-    "answer": "The temperature below which resistance drops to zero"
-  },
-  {
-    "question": "What is the magnetic susceptibility of a perfect diamagnet?",
-    "options": ["0", "+1", "-1", "Infinity"],
-    "answer": "-1"
-  }
-]
+{
+  "questions": [
+    {
+      "question": "Who originally discovered the phenomenon of superconductivity, and in what material?",
+      "answers": [
+        "Walther Meissner in Copper (1933)",
+        "Heike Kamerlingh Onnes in Mercury (1911)",
+        "Paul Chu in YBCO (1987)",
+        "John Bardeen in Lead (1957)"
+      ],
+      "correct": 1
+    },
+    {
+      "question": "Why is YBCO (YBa2Cu3O7-δ) classified as a High-Temperature Superconductor (HTS)?",
+      "answers": [
+        "It operates above the boiling point of liquid helium (4.2 K)",
+        "Its critical temperature (Tc ≈ 93 K) is higher than the boiling point of liquid nitrogen (77 K)",
+        "It can withstand melting temperatures above 1000 °C without resistance loss",
+        "It acts as a superconductor at room temperature (300 K)"
+      ],
+      "correct": 1
+    },
+    {
+      "question": "What is the primary difference between a theoretical 'perfect conductor' (σ → ∞) and an actual superconductor?",
+      "answers": [
+        "A perfect conductor exhibits infinite thermal conductivity, whereas a superconductor has zero thermal conductivity",
+        "A superconductor actively expels magnetic fields when cooled below Tc, whereas a perfect conductor only traps whatever field was present",
+        "A superconductor follows Ohm's law strictly, whereas a perfect conductor does not",
+        "A perfect conductor expels all magnetic flux lines regardless of its initial cooling state"
+      ],
+      "correct": 1
+    },
+    {
+      "question": "What is the volume magnetic susceptibility (χ = M / H) of a material in the complete Meissner state?",
+      "answers": [
+        "+1.0",
+        "0.0",
+        "-1.0",
+        "-0.5"
+      ],
+      "correct": 2
+    },
+    {
+      "question": "According to the BCS theory, which interaction causes the attractive force responsible for Cooper pairs?",
+      "answers": [
+        "Direct gravitational attraction between valence electrons",
+        "Electron-phonon (lattice polarization) coupling",
+        "Exchange interactions between aligned parallel electron spins",
+        "Strong nuclear force between protons and conduction electrons"
+      ],
+      "correct": 1
+    },
+    {
+      "question": "What is the value of the magnetic flux quantum (Φ0) that penetrates each vortex in a Type-II superconductor?",
+      "answers": [
+        "h / e ≈ 4.135 × 10^-15 Wb",
+        "h / (2e) ≈ 2.068 × 10^-15 Wb",
+        "μ0 * e ≈ 2.013 × 10^-25 Wb",
+        "2h / e ≈ 8.271 × 10^-15 Wb"
+      ],
+      "correct": 1
+    },
+    {
+      "question": "The characteristic depth to which an external magnetic field penetrates into a superconductor is known as the:",
+      "answers": [
+        "Ginzburg-Landau coherence length",
+        "De Broglie thermal wavelength",
+        "London penetration depth",
+        "Skin depth of high-frequency alternating current"
+      ],
+      "correct": 2
+    },
+    {
+      "question": "In the Resistance vs. Temperature (R–T) curve for YBCO, how does resistance behave as the sample cools through Tc = 93 K?",
+      "answers": [
+        "It decreases smoothly following a quadratic polynomial towards absolute zero",
+        "It drops abruptly to zero at 93 K and remains zero at all lower temperatures",
+        "It oscillates due to quantum Hall resistance plateaus",
+        "It spikes upward due to carrier localization and band gap opening"
+      ],
+      "correct": 1
+    }
+  ]
+}
