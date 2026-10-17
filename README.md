@@ -1,7 +1,7 @@
 ## Introduction
 
 
-<b>Discipline | <b>Information Technology
+<b>Discipline | <b>Physical Science/Applied Science
 :--|:--|
 <b> Lab | <b> Virtual Lab
 <b> Experiment|     <b> Superconductivity and Meissner Effect Simulation
